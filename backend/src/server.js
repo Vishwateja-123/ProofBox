@@ -8,10 +8,10 @@ const PORT = process.env.PORT || 5001;
 
 async function startServer() {
   try {
-    // 1. Connect to MongoDB
+   
     await connectDB();
 
-    // 2. Start Express server
+  
     const server = app.listen(PORT, () => {
       console.log('==================================================');
       console.log(`🚀 ProofBox API Server running on http://localhost:${PORT}`);
@@ -20,7 +20,7 @@ async function startServer() {
       console.log('==================================================');
     });
 
-    // Graceful shutdown handling
+   
     const shutdown = async (signal) => {
       console.log(`\n[Server] Received ${signal}. Gracefully shutting down...`);
       server.close(() => {
