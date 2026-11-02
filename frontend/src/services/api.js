@@ -3,7 +3,9 @@
  * Wraps fetch with authorization headers, cookie handling, and unified error parsing
  */
 
-const RAW_URL = import.meta.env.VITE_API_URL;
+const RAW_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://proofbox-backend-zxq4.onrender.com/api' : '');
 const API_BASE = RAW_URL
   ? (RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL.replace(/\/$/, '')}/api`)
   : '/api';
