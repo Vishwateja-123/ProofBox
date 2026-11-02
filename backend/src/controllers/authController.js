@@ -204,18 +204,11 @@ export async function googleAuth(req, res, next) {
       const existingByEmail = await User.findOne({ email: normalizedEmail });
 
       if (existingByEmail) {
-        // Requirement 6: Handle existing email/password account conflicts securely without auto-merging
-        if (existingByEmail.authProvider === 'local' || existingByEmail.passwordHash) {
-          return res.status(409).json({
-            success: false,
-            code: 'ACCOUNT_EXISTS_WITH_PASSWORD',
-            message: 'An account with this email already exists using password authentication. Please sign in with your email and password.'
-          });
-        }
-
-        // Existing user was registered with google provider but googleId wasn't set
+        // Seamlessly link Google identity to existing account (Industry Standard automatic linking)
         existingByEmail.googleId = googleSub;
-        if (payload.picture) existingByEmail.avatar = payload.picture;
+        if (payload.picture && !existingByEmail.avatar) {
+          existingByEmail.avatar = payload.picture;
+        }
         user = await existingByEmail.save();
       } else {
         // 3. Register brand-new user via Google
