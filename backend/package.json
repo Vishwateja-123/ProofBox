@@ -3,15 +3,12 @@
   "version": "1.0.0",
   "description": "ProofBox Backend Express & MongoDB API Server",
   "main": "src/server.js",
-  "scripts": {
-    "test": "node --test",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node --test tests/warranty.test.js tests/auth.test.js tests/googleAuth.test.js tests/purchase.test.js tests/authorization.test.js"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
@@ -19,6 +16,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
+    "google-auth-library": "^11.3.2",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.0",

@@ -57,7 +57,7 @@ export async function requireAuth(req, res, next) {
     const secret = process.env.JWT_SECRET || 'proofbox_super_secret_jwt_key_2026_sr_university_auth_token';
     const decoded = jwt.verify(token, secret);
 
-    const user = await User.findById(decoded.id).select('_id name email createdAt');
+    const user = await User.findById(decoded.id).select('_id name email avatar authProvider createdAt');
     if (!user) {
       return res.status(401).json({
         success: false,

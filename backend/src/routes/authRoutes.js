@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   register,
   login,
+  googleAuth,
   logout,
   getProfile
 } from '../controllers/authController.js';
@@ -13,6 +14,7 @@ const router = Router();
 
 router.post('/register', authRateLimiter, validateRegister, register);
 router.post('/login', authRateLimiter, validateLogin, login);
+router.post('/google', authRateLimiter, googleAuth);
 
 router.post('/logout', requireAuth, logout);
 router.get('/profile', requireAuth, getProfile);

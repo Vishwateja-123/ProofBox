@@ -4,6 +4,10 @@ import {
   augmentPurchaseWithWarranty
 } from '../utils/warrantyCalculator.js';
 
+/**
+ * Create a new purchase record
+ * POST /api/purchases
+ */
 export async function createPurchase(req, res, next) {
   try {
     const {
@@ -17,8 +21,10 @@ export async function createPurchase(req, res, next) {
       notes
     } = req.body;
 
+    // Calculate authoritative warranty expiry date
     const calculatedExpiry = calculateWarrantyExpiry(purchaseDate, warrantyMonths);
 
+    // Strict ownership enforcement: derived from authenticated user
     const purchase = new PurchaseRecord({
       ownerId: req.user._id,
       productName: productName.trim(),
@@ -44,6 +50,11 @@ export async function createPurchase(req, res, next) {
   }
 }
 
+/**
+ * Get all purchase records for the authenticated user
+ * Supports search, category filter, warranty status filter, sorting, and pagination
+ * GET /api/purchases
+ */
 export async function getPurchases(req, res, next) {
   try {
     const {
@@ -56,8 +67,10 @@ export async function getPurchases(req, res, next) {
       limit = 100
     } = req.query;
 
+    // Base query scoped strictly to authenticated user
     const filter = { ownerId: req.user._id };
 
+    // 1. Text search across productName and seller
     if (search && search.trim() !== '') {
       const searchRegex = new RegExp(search.trim(), 'i');
       filter.$or = [
@@ -66,10 +79,12 @@ export async function getPurchases(req, res, next) {
       ];
     }
 
+    // 2. Category filter
     if (category && category !== 'All') {
       filter.category = category;
     }
 
+    // 3. Warranty Status filter
     const now = new Date();
     const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
     const thirtyDaysEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 30, 23, 59, 59, 999));
@@ -82,11 +97,13 @@ export async function getPurchases(req, res, next) {
       filter.warrantyExpiryDate = { $gt: thirtyDaysEnd };
     }
 
+    // 4. Sorting
     const allowedSortFields = ['purchaseDate', 'warrantyExpiryDate', 'price', 'productName', 'seller', 'createdAt'];
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'purchaseDate';
     const sortOrder = order.toLowerCase() === 'asc' ? 1 : -1;
     const sortOptions = { [sortField]: sortOrder };
 
+    // 5. Pagination
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.max(1, Math.min(200, parseInt(limit, 10) || 50));
     const skip = (pageNum - 1) * limitNum;
@@ -114,6 +131,10 @@ export async function getPurchases(req, res, next) {
   }
 }
 
+/**
+ * Get purchases expiring within the inclusive 30-day window
+ * GET /api/purchases/expiring
+ */
 export async function getExpiringPurchases(req, res, next) {
   try {
     const now = new Date();
@@ -137,7 +158,10 @@ export async function getExpiringPurchases(req, res, next) {
   }
 }
 
-
+/**
+ * Get single purchase record by ID
+ * GET /api/purchases/:id
+ */
 export async function getPurchaseById(req, res, next) {
   try {
     const purchase = await PurchaseRecord.findOne({
@@ -161,6 +185,10 @@ export async function getPurchaseById(req, res, next) {
   }
 }
 
+/**
+ * Update purchase record (PATCH)
+ * PATCH /api/purchases/:id
+ */
 export async function updatePurchase(req, res, next) {
   try {
     const purchase = await PurchaseRecord.findOne({
@@ -221,6 +249,10 @@ export async function updatePurchase(req, res, next) {
   }
 }
 
+/**
+ * Delete purchase record
+ * DELETE /api/purchases/:id
+ */
 export async function deletePurchase(req, res, next) {
   try {
     const deleted = await PurchaseRecord.findOneAndDelete({

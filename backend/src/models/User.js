@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,7 +22,23 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, 'Password hash is required']
+      required: function () {
+        return this.authProvider === 'local';
+      }
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local'
+    },
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true
+    },
+    avatar: {
+      type: String,
+      default: null
     },
     createdAt: {
       type: Date,
@@ -41,13 +57,13 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-
+// Helper method to verify passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!candidatePassword || !this.passwordHash) return false;
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-
+// Static helper to hash passwords
 userSchema.statics.hashPassword = async function (plainPassword) {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plainPassword, salt);
@@ -56,5 +72,3 @@ userSchema.statics.hashPassword = async function (plainPassword) {
 const User = mongoose.model('User', userSchema);
 
 export default User;
-
-
