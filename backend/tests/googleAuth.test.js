@@ -139,37 +139,50 @@ describe('Google OAuth 2.0 Authentication Tests', () => {
     assert.equal(count, 1, 'Must not duplicate account in MongoDB');
   });
 
-  it('POST /api/auth/google — Rejects Google sign-in if account exists with password auth (409 Conflict)', async () => {
-    const passwordEmail = `test_google_conflict_${Date.now()}@gmail.com`;
+  it('POST /api/auth/google — Seamlessly links Google login if account was originally created with password', async () => {
+    const passwordEmail = `test_google_linking_${Date.now()}@gmail.com`;
 
     // Create a local password user first
-    const passwordHash = await User.hashPassword('ConflictPass123!');
-    await User.create({
-      name: 'Conflict User',
+    const passwordHash = await User.hashPassword('LinkingPass123!');
+    const localUser = await User.create({
+      name: 'Linking User',
       email: passwordEmail,
       passwordHash,
       authProvider: 'local'
     });
 
-    // Attempt to authenticate with Google using that same email
+    const mockGoogleSub = `sub_link_${Date.now()}`;
+    const mockPicture = 'https://lh3.googleusercontent.com/a/linked-avatar';
+
+    // Authenticate with Google using that same verified email
     setGoogleVerifier(async () => ({
-      sub: `sub_conflict_${Date.now()}`,
+      sub: mockGoogleSub,
       email: passwordEmail,
       email_verified: true,
-      name: 'Conflict User Google'
+      name: 'Linking User Google',
+      picture: mockPicture
     }));
 
     const res = await request(app)
       .post('/api/auth/google')
-      .send({ idToken: 'mock-conflict-token' })
-      .expect(409);
+      .send({ idToken: 'mock-linking-token' })
+      .expect(200);
 
-    assert.equal(res.body.success, false);
-    assert.equal(res.body.code, 'ACCOUNT_EXISTS_WITH_PASSWORD');
-    assert.match(res.body.message, /exists using password/i);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.user.email, passwordEmail);
+    assert.equal(res.body.user.avatar, mockPicture);
+    assert(res.body.token, 'Must return session token');
+
+    // Verify database document was updated with googleId without duplicating
+    const updatedUser = await User.findById(localUser._id);
+    assert.equal(updatedUser.googleId, mockGoogleSub);
+    assert.equal(updatedUser.avatar, mockPicture);
+
+    const count = await User.countDocuments({ email: passwordEmail });
+    assert.equal(count, 1, 'Must link to the same account and not create duplicate');
 
     // Clean up
-    await User.deleteOne({ email: passwordEmail });
+    await User.deleteOne({ _id: localUser._id });
   });
 
   it('POST /api/auth/login — Rejects password login attempt on a Google-only account without password', async () => {
