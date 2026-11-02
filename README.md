@@ -1,10 +1,4 @@
-# ProofBox 2.0 — Warranty & Receipt Vault
-
-[![SR University](https://img.shields.io/badge/SR%20University-Mini--Project-blue?style=flat-square)](https://sru.edu.in)
-[![Design](https://img.shields.io/badge/Design-Apple--Inspired%20Consumer%20UI-black?style=flat-square)](#design-philosophy)
-[![Stack](https://img.shields.io/badge/Stack-MERN-green?style=flat-square)](#technology-stack)
-[![Tests](https://img.shields.io/badge/Tests-52%20Passed-emerald?style=flat-square)](#automated-testing)
-[![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon%20M3-purple?style=flat-square)](#development-environment)
+# ProofBox — Warranty & Receipt Vault
 
 A full-stack MERN application for organizing product purchases, archiving digital receipts and invoices, authoritatively calculating warranty expiration timelines, and delivering timely expiration intelligence before coverage lapses.
 
