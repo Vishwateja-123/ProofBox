@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes.js';
 import purchaseRoutes from './routes/purchaseRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
+import productRoutes from './routes/productRoutes.js';
 
 import {
   errorHandler,
@@ -125,6 +126,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/receipts', receiptRoutes);
+app.use('/api/products', productRoutes);
 
 // 10. Handle routes that do not exist
 app.use(notFoundHandler);
