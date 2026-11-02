@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, User, Mail, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { GoogleSignInButton } from '../components/GoogleSignInButton.jsx';
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -12,9 +13,28 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  const handleGoogleSuccess = async (credential) => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogle(credential);
+      showToast('Welcome to ProofBox with Google!', 'success');
+      navigate('/', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Google registration failed.');
+      showToast(err.message || 'Google registration failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = (errorMsg) => {
+    setError(errorMsg);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,6 +179,13 @@ export function RegisterPage() {
               {error}
             </div>
           )}
+
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            loading={loading}
+            label="Sign up with Google"
+          />
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

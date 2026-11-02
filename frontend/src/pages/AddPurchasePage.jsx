@@ -49,6 +49,7 @@ export function AddPurchasePage() {
   });
 
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [uploadedReceiptName, setUploadedReceiptName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -56,6 +57,18 @@ export function AddPurchasePage() {
   const warrantyPreview = useMemo(() => {
     return calculateLocalExpiry(formData.purchaseDate, formData.warrantyMonths);
   }, [formData.purchaseDate, formData.warrantyMonths]);
+
+  // Backend uploads are stored as relative paths (e.g. /uploads/receipt.pdf),
+  // not absolute web URLs. Never put one in an <input type="url">.
+  const hasUploadedReceipt = typeof formData.receiptUrl === 'string' &&
+    formData.receiptUrl.startsWith('/uploads/');
+
+  const removeReceipt = () => {
+    // Unlinks the receipt from the purchase when the form is saved;
+    // it does not delete the uploaded file from server storage.
+    setFormData((prev) => ({ ...prev, receiptUrl: '' }));
+    setUploadedReceiptName('');
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,20 +80,34 @@ export function AddPurchasePage() {
 
   // Local receipt file upload handler
   const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
+
+    // Match the 10 MB limit shown in the upload UI.
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Receipt must be 10 MB or smaller.', 'error');
+      input.value = '';
+      return;
+    }
 
     setUploadingReceipt(true);
     try {
       const res = await purchaseService.uploadReceipt(file);
-      if (res.success && res.receiptUrl) {
-        setFormData((prev) => ({ ...prev, receiptUrl: res.receiptUrl }));
-        showToast('Receipt file uploaded successfully!', 'success');
+      if (!res.success || !res.receiptUrl) {
+        throw new Error('Receipt upload did not return a file path.');
       }
+
+      // Preserve the returned /uploads/... path for the purchase API.
+      setFormData((prev) => ({ ...prev, receiptUrl: res.receiptUrl }));
+      setUploadedReceiptName(file.name);
+      showToast('Receipt uploaded. Click Save Product to attach it to this purchase.', 'success');
     } catch (err) {
-      showToast(err.message || 'Failed to upload receipt file', 'error');
+      showToast(err.message || 'Failed to upload receipt file.', 'error');
     } finally {
       setUploadingReceipt(false);
+      // Allow selecting the same file again if the user replaces it.
+      input.value = '';
     }
   };
 
@@ -101,6 +128,8 @@ export function AddPurchasePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Prevent saving stale receipt data while an upload is still in progress.
+    if (uploadingReceipt || submitting) return;
     if (!validate()) {
       showToast('Please fix the highlighted errors before saving.', 'error');
       return;
@@ -332,36 +361,95 @@ export function AddPurchasePage() {
               4. Proof of Purchase & Receipt
             </h3>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="receiptUrl">
-                Receipt / Invoice URL
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  id="receiptUrl"
-                  name="receiptUrl"
-                  type="url"
-                  className="form-control"
-                  placeholder="https://example.com/receipt.pdf or receipt image link"
-                  value={formData.receiptUrl}
-                  onChange={handleChange}
-                />
-                {formData.receiptUrl && (
-                  <a
-                    href={formData.receiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary btn-icon"
-                    title="Test receipt URL in new tab"
-                  >
-                    <ExternalLink size={15} />
-                  </a>
-                )}
+            {hasUploadedReceipt ? (
+              <div className="form-group">
+                <label className="form-label">Uploaded Receipt</label>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.9rem',
+                    padding: '1rem 1.25rem',
+                    background: 'var(--bg-canvas)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-lg)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                    <FileText size={22} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                        Receipt attached
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflowWrap: 'anywhere' }}>
+                        {uploadedReceiptName || 'Uploaded PDF or image'}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <a
+                      href={formData.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary btn-sm"
+                      title="View uploaded receipt"
+                    >
+                      <ExternalLink size={14} />
+                      View
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={removeReceipt}
+                      disabled={uploadingReceipt || submitting}
+                      title="Remove receipt association from this purchase"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <span className="form-hint">
+                  {uploadedReceiptName
+                    ? 'Upload complete. Click Save Product to attach this file to your purchase.'
+                    : 'Receipt is already attached. You can view, replace, or remove it.'}
+                </span>
               </div>
-              <span className="form-hint">
-                Supports image links (JPG, PNG, WEBP), Cloud drive URLs, and PDF documents.
-              </span>
-            </div>
+            ) : (
+              <div className="form-group">
+                <label className="form-label" htmlFor="receiptUrl">
+                  Receipt / Invoice URL (Optional)
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    id="receiptUrl"
+                    name="receiptUrl"
+                    type="url"
+                    pattern="https?://.+"
+                    className="form-control"
+                    placeholder="https://example.com/receipt.pdf"
+                    value={formData.receiptUrl}
+                    onChange={handleChange}
+                    disabled={uploadingReceipt || submitting}
+                  />
+                  {/^https?:\/\//i.test(formData.receiptUrl) && (
+                    <a
+                      href={formData.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary btn-icon"
+                      title="Open external receipt URL"
+                    >
+                      <ExternalLink size={15} />
+                    </a>
+                  )}
+                </div>
+                <span className="form-hint">
+                  Paste an external receipt link, or upload a PDF or image below instead.
+                </span>
+              </div>
+            )}
 
             {/* Local File Upload */}
             <div
@@ -390,7 +478,7 @@ export function AddPurchasePage() {
                     accept="image/*,application/pdf"
                     onChange={handleFileUpload}
                     style={{ display: 'none' }}
-                    disabled={uploadingReceipt}
+                    disabled={uploadingReceipt || submitting}
                   />
                 </label>
               </div>
@@ -427,7 +515,7 @@ export function AddPurchasePage() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={submitting}
+              disabled={submitting || uploadingReceipt}
               style={{ minWidth: '150px' }}
             >
               <Save size={15} />

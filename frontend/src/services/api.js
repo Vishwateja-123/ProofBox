@@ -3,7 +3,22 @@
  * Wraps fetch with authorization headers, cookie handling, and unified error parsing
  */
 
-const API_BASE = '/api';
+const RAW_URL = import.meta.env.VITE_API_URL;
+const API_BASE = RAW_URL
+  ? (RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL.replace(/\/$/, '')}/api`)
+  : '/api';
+
+/**
+ * Helper to resolve uploaded receipt assets when backend and frontend
+ * run on different origins in production (e.g. Render + Vercel)
+ */
+export function getAssetUrl(assetPath) {
+  if (!assetPath) return '';
+  if (/^(https?:|\/\/|data:)/i.test(assetPath)) return assetPath;
+  if (!RAW_URL) return assetPath;
+  const backendBase = RAW_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  return `${backendBase}${assetPath.startsWith('/') ? '' : '/'}${assetPath}`;
+}
 
 export async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;

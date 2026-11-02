@@ -25,6 +25,18 @@ export const authService = {
     return data;
   },
 
+  async googleAuth(credential) {
+    const data = await request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential, idToken: credential })
+    });
+    if (data.token) {
+      localStorage.setItem('proofbox_token', data.token);
+      localStorage.setItem('proofbox_user', JSON.stringify(data.user));
+    }
+    return data;
+  },
+
   async logout() {
     try {
       await request('/auth/logout', { method: 'POST' });

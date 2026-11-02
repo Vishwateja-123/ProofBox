@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Lock, Mail, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { GoogleSignInButton } from '../components/GoogleSignInButton.jsx';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,12 +11,31 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/';
+
+  const handleGoogleSuccess = async (credential) => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogle(credential);
+      showToast('Welcome to ProofBox with Google!', 'success');
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Google authentication failed.');
+      showToast(err.message || 'Google authentication failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = (errorMsg) => {
+    setError(errorMsg);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,6 +170,13 @@ export function LoginPage() {
               {error}
             </div>
           )}
+
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            loading={loading}
+            label="Continue with Google"
+          />
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { dashboardService } from '../services/dashboardService.js';
 import { formatDate, formatCurrency } from '../utils/dateUtils.js';
+import { GoogleIcon } from '../components/GoogleSignInButton.jsx';
 
 export function ProfilePage() {
   const { user, logout } = useAuth();
@@ -77,16 +78,65 @@ export function ProfilePage() {
                 justifyContent: 'center',
                 fontSize: '1.4rem',
                 fontWeight: '700',
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: 'hidden'
               }}
             >
-              {getInitials(user?.name)}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user?.name}
+                  referrerPolicy="no-referrer"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                getInitials(user?.name)
+              )}
             </div>
 
             <div>
-              <h2 style={{ fontSize: '1.45rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-                {user?.name}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.45rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                  {user?.name}
+                </h2>
+                {user?.authProvider === 'google' ? (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'rgba(66, 133, 244, 0.08)',
+                      border: '1px solid rgba(66, 133, 244, 0.25)',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: '#1a73e8'
+                    }}
+                  >
+                    <GoogleIcon size={12} />
+                    <span>Google Account</span>
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    <Lock size={11} />
+                    <span>Password Account</span>
+                  </span>
+                )}
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
                 <Mail size={14} style={{ color: 'var(--text-tertiary)' }} />
                 <span>{user?.email}</span>

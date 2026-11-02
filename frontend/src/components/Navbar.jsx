@@ -17,6 +17,7 @@ export function Navbar({ onMenuClick, expiringCount = 0 }) {
   return (
     <header className="header-nav">
       <div className="header-container">
+        {/* Left: Brand Identity */}
         <Link to="/" className="brand-badge" aria-label="ProofBox Home">
           <div className="brand-icon-emblem">
             <Shield size={16} strokeWidth={2.4} />
@@ -24,6 +25,7 @@ export function Navbar({ onMenuClick, expiringCount = 0 }) {
           <span>ProofBox</span>
         </Link>
 
+        {/* Center: Editorial Navigation Links (Desktop) */}
         <nav className="nav-links-desktop" aria-label="Main Navigation">
           <NavLink
             to="/"
@@ -70,6 +72,7 @@ export function Navbar({ onMenuClick, expiringCount = 0 }) {
           </NavLink>
         </nav>
 
+        {/* Right: Actions */}
         <div className="nav-actions-desktop">
           <Link to="/purchases/new" className="btn btn-primary btn-sm">
             <Plus size={15} strokeWidth={2.2} />
@@ -96,10 +99,25 @@ export function Navbar({ onMenuClick, expiringCount = 0 }) {
               title={`Signed in as ${user.name}`}
               aria-label="Account profile"
             >
-              {getInitials(user.name)}
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: 'var(--radius-full)',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                getInitials(user.name)
+              )}
             </Link>
           )}
 
+          {/* Mobile hamburger button */}
           <button
             className="mobile-nav-toggle"
             onClick={onMenuClick}

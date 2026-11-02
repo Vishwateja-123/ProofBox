@@ -55,6 +55,15 @@ export function AuthProvider({ children }) {
     return res;
   };
 
+  const loginWithGoogle = async (credential) => {
+    const res = await authService.googleAuth(credential);
+    if (res.success) {
+      setUser(res.user);
+      setToken(res.token);
+    }
+    return res;
+  };
+
   const logout = async () => {
     try {
       await authService.logout();
@@ -73,6 +82,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        loginWithGoogle,
         logout
       }}
     >

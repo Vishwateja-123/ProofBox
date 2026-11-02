@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { X, ExternalLink, FileText, ImageOff } from 'lucide-react';
+import { getAssetUrl } from '../services/api.js';
 
 export function ReceiptModal({ isOpen = true, onClose, receiptUrl, productName }) {
   const [loadError, setLoadError] = useState(false);
 
   if (!isOpen || !receiptUrl) return null;
 
-  const isPdf = receiptUrl.toLowerCase().endsWith('.pdf') || receiptUrl.includes('application/pdf');
+  const resolvedUrl = getAssetUrl(receiptUrl);
+  const isPdf = resolvedUrl.toLowerCase().endsWith('.pdf') || resolvedUrl.includes('application/pdf');
 
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
@@ -26,7 +28,7 @@ export function ReceiptModal({ isOpen = true, onClose, receiptUrl, productName }
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <a
-              href={receiptUrl}
+              href={resolvedUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-secondary btn-icon"
@@ -66,7 +68,7 @@ export function ReceiptModal({ isOpen = true, onClose, receiptUrl, productName }
                 This receipt is archived as a high-fidelity PDF document.
               </p>
               <a
-                href={receiptUrl}
+                href={resolvedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-sm"
@@ -83,7 +85,7 @@ export function ReceiptModal({ isOpen = true, onClose, receiptUrl, productName }
                 The linked URL may have cross-origin restrictions or require external opening.
               </p>
               <a
-                href={receiptUrl}
+                href={resolvedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary btn-sm"
@@ -94,7 +96,7 @@ export function ReceiptModal({ isOpen = true, onClose, receiptUrl, productName }
             </div>
           ) : (
             <img
-              src={receiptUrl}
+              src={resolvedUrl}
               alt={`Receipt for ${productName || 'Purchase'}`}
               onError={() => setLoadError(true)}
               style={{
