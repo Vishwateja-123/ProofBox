@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Calendar,
@@ -12,11 +12,14 @@ import {
   Clock,
   ExternalLink,
   Sparkles,
-  FileText
+  FileText,
+  Check,
+  Palette
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
 import { calculateLocalExpiry, formatDate, formatCurrency } from '../utils/dateUtils.js';
 import { WarrantyBadge } from '../components/WarrantyBadge.jsx';
+import { ProductVisualSearch } from '../components/ProductVisualSearch.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 
 const CATEGORIES = [
@@ -33,6 +36,7 @@ const CATEGORIES = [
 
 export function AddPurchasePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -48,10 +52,43 @@ export function AddPurchasePage() {
     notes: ''
   });
 
+  const [configuredProduct, setConfiguredProduct] = useState(null);
+  const [showVisualSearch, setShowVisualSearch] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadedReceiptName, setUploadedReceiptName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Auto-fill from route state if routed from visual explorer
+  useEffect(() => {
+    if (location.state?.prefill) {
+      const p = location.state.prefill;
+      setFormData((prev) => ({
+        ...prev,
+        productName: p.productName || p.name || prev.productName,
+        category: p.category || prev.category,
+        seller: p.seller || p.defaultSeller || prev.seller,
+        price: p.price ?? p.basePrice ?? prev.price,
+        warrantyMonths: p.warrantyMonths ?? p.defaultWarrantyMonths ?? prev.warrantyMonths
+      }));
+      setConfiguredProduct(p);
+      showToast(`Selected "${p.productName || p.name}" from catalog.`, 'success');
+    }
+  }, [location.state]);
+
+  const handleSelectProduct = (selected) => {
+    setFormData((prev) => ({
+      ...prev,
+      productName: selected.productName,
+      category: selected.category || prev.category,
+      seller: selected.seller || prev.seller,
+      price: selected.price ?? prev.price,
+      warrantyMonths: selected.warrantyMonths ?? prev.warrantyMonths
+    }));
+    setConfiguredProduct(selected);
+    setShowVisualSearch(false);
+    showToast(`Configured: ${selected.productName}`, 'success');
+  };
 
   // Real-time warranty calculation preview
   const warrantyPreview = useMemo(() => {
@@ -195,11 +232,170 @@ export function AddPurchasePage() {
               1. Product Details
             </h3>
 
+            {/* Apple-style Configured Hardware Preview Banner */}
+            {configuredProduct && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem 1.25rem',
+                  marginBottom: '1.25rem',
+                  background: 'linear-gradient(135deg, #FBFBFD 0%, #F5F5F7 100%)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(0, 0, 0, 0.08)',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {configuredProduct.previewImage && (
+                    <img
+                      src={configuredProduct.previewImage}
+                      alt={configuredProduct.productName}
+                      style={{
+                        width: '54px',
+                        height: '54px',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12))'
+                      }}
+                    />
+                  )}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', background: '#000000', color: '#FFFFFF', padding: '0.15rem 0.45rem', borderRadius: 'var(--radius-full)' }}>
+                        Verified Spec
+                      </span>
+                      {configuredProduct.colorName && (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                          Finish: <strong>{configuredProduct.colorName}</strong>
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginTop: '0.15rem', fontSize: '0.95rem' }}>
+                      {configuredProduct.productName}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowVisualSearch(true)}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    <Palette size={13} />
+                    <span>Change Finish</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfiguredProduct(null)}
+                    className="btn btn-subtle btn-sm"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Flagship Quick Picks Bar */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Explore Popular Hardware
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowVisualSearch(!showVisualSearch)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  <Sparkles size={12} />
+                  <span>{showVisualSearch ? 'Hide Visual Explorer' : 'Open Visual Explorer'}</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.45rem', overflowX: 'auto', paddingBottom: '0.2rem', scrollbarWidth: 'none' }}>
+                {[
+                  'iPhone 16 Pro',
+                  'MacBook Air M3',
+                  'AirPods Pro 2',
+                  'Apple Watch Series 10',
+                  'Sony WH-1000XM5',
+                  'Galaxy S24 Ultra',
+                  'PlayStation 5 Slim',
+                  'Dyson V15'
+                ].map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, productName: item }));
+                      setShowVisualSearch(true);
+                    }}
+                    style={{
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: 'var(--radius-full)',
+                      border: formData.productName.includes(item) ? '1px solid var(--text-primary)' : '1px solid var(--border-subtle)',
+                      background: formData.productName.includes(item) ? 'var(--text-primary)' : '#FFFFFF',
+                      color: formData.productName.includes(item) ? '#FFFFFF' : 'var(--text-primary)',
+                      fontSize: '0.78rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Apple.com Visual Search Configurator Stage */}
+            {showVisualSearch && (
+              <ProductVisualSearch
+                query={formData.productName}
+                onSelectProduct={handleSelectProduct}
+                onClose={() => setShowVisualSearch(false)}
+              />
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
               <div className="form-group">
-                <label className="form-label" htmlFor="productName">
-                  Product Name *
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                  <label className="form-label" htmlFor="productName" style={{ marginBottom: 0 }}>
+                    Product Name *
+                  </label>
+                  {!showVisualSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setShowVisualSearch(true)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.75rem',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem'
+                      }}
+                    >
+                      <Sparkles size={11} />
+                      <span>Visual Search</span>
+                    </button>
+                  )}
+                </div>
                 <input
                   id="productName"
                   name="productName"
@@ -207,7 +403,12 @@ export function AddPurchasePage() {
                   className="form-control"
                   placeholder="e.g. MacBook Air M3, Sony WH-1000XM5"
                   value={formData.productName}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value.length >= 2 && !showVisualSearch) {
+                      setShowVisualSearch(true);
+                    }
+                  }}
                   required
                 />
                 {errors.productName && <span className="form-error">{errors.productName}</span>}
