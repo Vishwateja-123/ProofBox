@@ -14,7 +14,6 @@ import { purchaseService } from '../services/purchaseService.js';
 import { calculateLocalExpiry, formatDate } from '../utils/dateUtils.js';
 import { WarrantyBadge } from '../components/WarrantyBadge.jsx';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
-import { ProductVisualSearch } from '../components/ProductVisualSearch.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 
 const CATEGORIES = [
@@ -49,23 +48,9 @@ export function EditPurchasePage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadedReceiptName, setUploadedReceiptName] = useState('');
-  const [showVisualSearch, setShowVisualSearch] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  const handleSelectProduct = (selected) => {
-    setFormData((prev) => ({
-      ...prev,
-      productName: selected.productName,
-      category: selected.category || prev.category,
-      seller: selected.seller || prev.seller,
-      price: selected.price ?? prev.price,
-      warrantyMonths: selected.warrantyMonths ?? prev.warrantyMonths
-    }));
-    setShowVisualSearch(false);
-    showToast(`Updated to: ${selected.productName}`, 'success');
-  };
 
   useEffect(() => {
     async function loadPurchase() {
@@ -269,52 +254,18 @@ export function EditPurchasePage() {
               1. Product Details
             </h3>
 
-            {/* Apple.com Visual Search Configurator Stage */}
-            {showVisualSearch && (
-              <ProductVisualSearch
-                query={formData.productName}
-                onSelectProduct={handleSelectProduct}
-                onClose={() => setShowVisualSearch(false)}
-              />
-            )}
-
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
               <div className="form-group">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                  <label className="form-label" htmlFor="productName" style={{ marginBottom: 0 }}>
-                    Product Name *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowVisualSearch(!showVisualSearch)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--primary)',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
-                    }}
-                  >
-                    <Sparkles size={11} />
-                    <span>{showVisualSearch ? 'Hide Visual Search' : 'Visual Product Search'}</span>
-                  </button>
-                </div>
+                <label className="form-label" htmlFor="productName">
+                  Product Name *
+                </label>
                 <input
                   id="productName"
                   name="productName"
                   type="text"
                   className="form-control"
                   value={formData.productName}
-                  onChange={(e) => {
-                    handleChange(e);
-                    if (e.target.value.length >= 2 && !showVisualSearch) {
-                      setShowVisualSearch(true);
-                    }
-                  }}
+                  onChange={handleChange}
                   required
                 />
                 {errors.productName && <span className="form-error">{errors.productName}</span>}
