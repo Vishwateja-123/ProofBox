@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test tests/warranty.test.js tests/auth.test.js tests/googleAuth.test.js tests/purchase.test.js tests/authorization.test.js tests/product.test.js"
+    "test": "node --test tests/warranty.test.js tests/auth.test.js tests/googleAuth.test.js tests/purchase.test.js tests/authorization.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

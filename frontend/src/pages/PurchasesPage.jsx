@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -8,15 +8,13 @@ import {
   ShoppingBag,
   ArrowUpDown,
   X,
-  SlidersHorizontal,
-  Sparkles
+  SlidersHorizontal
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
 import { PurchaseCard } from '../components/PurchaseCard.jsx';
 import { PurchaseTable } from '../components/PurchaseTable.jsx';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
 import { ReceiptModal } from '../components/ReceiptModal.jsx';
-import { ProductVisualSearch } from '../components/ProductVisualSearch.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 
 const CATEGORIES = [
@@ -33,14 +31,12 @@ const CATEGORIES = [
 ];
 
 export function PurchasesPage() {
-  const navigate = useNavigate();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
   // Search & Filter state
   const [search, setSearch] = useState('');
-  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('purchaseDate');
@@ -228,18 +224,6 @@ export function PurchasesPage() {
             <ArrowUpDown size={15} />
           </button>
 
-          {/* Visual Catalog Toggle */}
-          <button
-            type="button"
-            className={`btn ${showCatalogSearch ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-            onClick={() => setShowCatalogSearch(!showCatalogSearch)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-            title="Toggle Apple-inspired Visual Product Explorer"
-          >
-            <Sparkles size={14} />
-            <span>Visual Explorer</span>
-          </button>
-
           {/* View Mode Toggle */}
           <div style={{ display: 'inline-flex', background: 'var(--bg-canvas)', padding: '0.2rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-subtle)', marginLeft: 'auto' }}>
             <button
@@ -296,19 +280,6 @@ export function PurchasesPage() {
             </button>
           </div>
         )}
-
-        {/* Apple-inspired Visual Product Search Stage */}
-        {showCatalogSearch && (
-          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-subtle)' }}>
-            <ProductVisualSearch
-              query={search}
-              onSelectProduct={(product) => {
-                navigate('/purchases/new', { state: { prefill: product } });
-              }}
-              onClose={() => setShowCatalogSearch(false)}
-            />
-          </div>
-        )}
       </div>
 
       {/* Main Content View */}
@@ -327,40 +298,25 @@ export function PurchasesPage() {
           ))}
         </div>
       ) : purchases.length === 0 ? (
-        <div>
-          <div className="empty-state" style={{ marginBottom: search ? '1.5rem' : 0 }}>
-            <div className="empty-state-icon">
-              <ShoppingBag size={24} />
-            </div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '600' }}>No Vault Records Found</h2>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '460px', fontSize: '0.9rem' }}>
-              {search
-                ? `You don't have "${search}" recorded in your vault yet. Explore official models, finishes, and specs below to register it:`
-                : selectedCategory !== 'All' || statusFilter !== 'all'
-                ? 'No purchase records match your search criteria. Try adjusting or clearing your filters.'
-                : 'You have not added any product records to your vault yet.'}
-            </p>
-            {search || selectedCategory !== 'All' || statusFilter !== 'all' ? (
-              <button onClick={clearFilters} className="btn btn-secondary">
-                Clear All Filters
-              </button>
-            ) : (
-              <Link to="/purchases/new" className="btn btn-primary">
-                <Plus size={15} />
-                <span>Add Your First Product</span>
-              </Link>
-            )}
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <ShoppingBag size={24} />
           </div>
-
-          {search && (
-            <div style={{ maxWidth: '880px', margin: '0 auto' }}>
-              <ProductVisualSearch
-                query={search}
-                onSelectProduct={(product) => {
-                  navigate('/purchases/new', { state: { prefill: product } });
-                }}
-              />
-            </div>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '600' }}>No Products Found</h2>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '420px', fontSize: '0.9rem' }}>
+            {search || selectedCategory !== 'All' || statusFilter !== 'all'
+              ? 'No purchase records match your search criteria. Try adjusting or clearing your filters.'
+              : 'You have not added any product records to your vault yet.'}
+          </p>
+          {search || selectedCategory !== 'All' || statusFilter !== 'all' ? (
+            <button onClick={clearFilters} className="btn btn-secondary">
+              Clear All Filters
+            </button>
+          ) : (
+            <Link to="/purchases/new" className="btn btn-primary">
+              <Plus size={15} />
+              <span>Add Your First Product</span>
+            </Link>
           )}
         </div>
       ) : viewMode === 'grid' ? (
