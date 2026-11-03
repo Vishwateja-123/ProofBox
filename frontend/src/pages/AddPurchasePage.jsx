@@ -11,7 +11,6 @@ import {
   Upload,
   Clock,
   ExternalLink,
-  Sparkles,
   FileText
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
@@ -176,12 +175,8 @@ export function AddPurchasePage() {
 
       <div className="card" style={{ padding: '2.5rem' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <div className="hero-editorial-badge" style={{ marginBottom: '0.5rem' }}>
-            <Sparkles size={13} />
-            <span>New Protection Record</span>
-          </div>
           <h1 style={{ fontSize: '2rem', fontWeight: '700', letterSpacing: '-0.03em', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
-            Add something worth keeping.
+            Add Purchase
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
             Register your purchase, calculate verified warranty coverage, and attach receipt evidence.

@@ -7,8 +7,7 @@ import {
   Upload,
   FileText,
   ExternalLink,
-  Trash2,
-  Sparkles
+  Trash2
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
 import { calculateLocalExpiry, formatDate } from '../utils/dateUtils.js';
@@ -235,12 +234,8 @@ export function EditPurchasePage() {
 
       <div className="card" style={{ padding: '2.5rem' }}>
         <div style={{ marginBottom: '2rem' }}>
-          <div className="hero-editorial-badge" style={{ marginBottom: '0.5rem' }}>
-            <Sparkles size={13} />
-            <span>Edit Record</span>
-          </div>
           <h1 style={{ fontSize: '2rem', fontWeight: '700', letterSpacing: '-0.03em', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
-            Refine product record.
+            Edit Purchase
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
             Update product details, purchase value, warranty duration, or attached invoice evidence.
