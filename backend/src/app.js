@@ -5,12 +5,14 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import fs from 'fs';
 import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes.js';
 import purchaseRoutes from './routes/purchaseRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import receiptRoutes from './routes/receiptRoutes.js';
+import ReceiptFile from './models/ReceiptFile.js';
 
 import {
   errorHandler,
@@ -91,11 +93,43 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// 6. Existing receipt serving
-// NOTE: This is public static serving.
-// Replace with authenticated receipt access before
-// handling private documents on a shared network.
+// 6. Existing receipt serving (with MongoDB Atlas persistence fallback)
 const uploadsDir = path.resolve(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+app.get('/uploads/:filename', async (req, res, next) => {
+  const { filename } = req.params;
+  const localPath = path.resolve(uploadsDir, filename);
+
+  // Serve from local disk cache if present
+  if (fs.existsSync(localPath)) {
+    return res.sendFile(localPath);
+  }
+
+  // Fallback: fetch from MongoDB Atlas (persists across Render container restarts)
+  try {
+    const fileDoc = await ReceiptFile.findOne({ filename });
+    if (fileDoc && fileDoc.data) {
+      // Re-populate disk cache
+      try {
+        fs.writeFileSync(localPath, fileDoc.data);
+      } catch (cacheErr) {
+        // Non-fatal cache write failure
+      }
+
+      res.setHeader('Content-Type', fileDoc.contentType || 'application/octet-stream');
+      res.setHeader('Content-Length', fileDoc.size || fileDoc.data.length);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(fileDoc.data);
+    }
+  } catch (err) {
+    console.error('Error retrieving receipt from MongoDB Atlas:', err);
+  }
+
+  return next();
+});
 
 app.use('/uploads', express.static(uploadsDir));
 

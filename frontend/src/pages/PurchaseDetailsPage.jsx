@@ -16,6 +16,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
+import { getAssetUrl } from '../services/api.js';
 import { formatDate, formatCurrency, formatDateTime } from '../utils/dateUtils.js';
 import { WarrantyBadge } from '../components/WarrantyBadge.jsx';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
@@ -278,7 +279,7 @@ export function PurchaseDetailsPage() {
                 <span>View Full Receipt</span>
               </button>
               <a
-                href={purchase.receiptUrl}
+                href={getAssetUrl(purchase.receiptUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary btn-sm"
@@ -317,7 +318,7 @@ export function PurchaseDetailsPage() {
               </div>
             ) : (
               <img
-                src={purchase.receiptUrl}
+                src={getAssetUrl(purchase.receiptUrl)}
                 alt={`Receipt for ${purchase.productName}`}
                 style={{
                   maxHeight: '280px',
