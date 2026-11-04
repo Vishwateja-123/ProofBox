@@ -10,6 +10,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
+import { getAssetUrl } from '../services/api.js';
 import { calculateLocalExpiry, formatDate } from '../utils/dateUtils.js';
 import { WarrantyBadge } from '../components/WarrantyBadge.jsx';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal.jsx';
@@ -440,7 +441,7 @@ export function EditPurchasePage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <a
-                      href={formData.receiptUrl}
+                      href={getAssetUrl(formData.receiptUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-secondary btn-sm"

@@ -13,6 +13,7 @@ import {
   Plus
 } from 'lucide-react';
 import { purchaseService } from '../services/purchaseService.js';
+import { getAssetUrl } from '../services/api.js';
 import { formatDate, formatCurrency } from '../utils/dateUtils.js';
 import { ReceiptModal } from '../components/ReceiptModal.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -120,7 +121,7 @@ export function ReceiptVaultPage() {
                     </div>
                   ) : (
                     <img
-                      src={item.receiptUrl}
+                      src={getAssetUrl(item.receiptUrl)}
                       alt={`Receipt for ${item.productName}`}
                       style={{
                         width: '100%',
@@ -169,7 +170,7 @@ export function ReceiptVaultPage() {
                     </button>
 
                     <a
-                      href={item.receiptUrl}
+                      href={getAssetUrl(item.receiptUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-subtle btn-sm"
